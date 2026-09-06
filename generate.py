@@ -13,6 +13,7 @@ from openpyxl import load_workbook
 REPO = "candidates.xlsx"
 REPO_SHEET = "Кандидаты по округам"
 CONTACT_COLS = ["ВКонтакте", "Telegram", "запрещённая сеть", "Одноклассники", "MAX", "Сайт", "Дзен"]
+ALLOWED_PARTIES = {"Единая Россия", "КПРФ", "ЛДПР", "Справедливая Россия", "Новые люди"}
 
 
 def make_link(url: str) -> str:
@@ -63,6 +64,8 @@ col = {h: i for i, h in enumerate(headers)}
 by_region = {}
 for row in ws.iter_rows(min_row=2, values_only=True):
     if not row[col["Кандидат"]]:
+        continue
+    if row[col["Партия"]] not in ALLOWED_PARTIES:
         continue
     by_region.setdefault(row[col["Регион"]], []).append(row)
 
