@@ -1,23 +1,15 @@
-document.querySelectorAll('.copy').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const q = btn.closest('.question').querySelector('.qtext');
-    const text = q.textContent.trim();
-    const done = () => {
-      btn.classList.add('done');
-      const span = btn.querySelector('span');
-      span.textContent = 'Скопировано';
-      setTimeout(() => {
-        btn.classList.remove('done');
-        span.textContent = 'Копировать';
-      }, 1600);
-    };
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
-    } else {
-      fallbackCopy(text, done);
-    }
-  });
-});
+function flashDone(btn, doneLabel) {
+  const span = btn.querySelector('span');
+  const restore = span ? span.textContent : btn.dataset.label;
+  btn.classList.add('done');
+  if (span) span.textContent = doneLabel;
+  else btn.textContent = doneLabel;
+  setTimeout(() => {
+    btn.classList.remove('done');
+    if (span) span.textContent = restore;
+    else btn.textContent = restore;
+  }, 1600);
+}
 
 function fallbackCopy(text, done) {
   const ta = document.createElement('textarea');
@@ -33,3 +25,27 @@ function fallbackCopy(text, done) {
     ta.remove();
   }
 }
+
+function copyText(btn, text, doneLabel) {
+  const done = () => flashDone(btn, doneLabel);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+document.querySelectorAll('.copy').forEach((btn) => {
+  const q = btn.closest('.question').querySelector('.qtext');
+  btn.addEventListener('click', () => copyText(btn, q.textContent.trim(), 'Скопировано'));
+});
+
+document.querySelectorAll('.ask').forEach((btn) => {
+  btn.dataset.label = btn.textContent.trim();
+  btn.addEventListener('click', () => {
+    const bank = window.VOPROSY;
+    if (!bank || !bank.length) return;
+    const text = btn.dataset.greet + bank[Math.floor(Math.random() * bank.length)];
+    copyText(btn, text, 'Скопировано!');
+  });
+});

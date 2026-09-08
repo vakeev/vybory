@@ -4,13 +4,15 @@
 Pages:
   index.html                  root menu: «Вопросы депутатам» / «Депутаты»
   voprosy-deputatam.html      question list with copy buttons
+  voprosy.js                  question bank as JS data (window.VOPROSY)
   deputaty.html               menu of regions
-  regions/<slug>.html         deputies of one region
+  regions/<slug>.html         deputies of one region, each with a random-question button
 
 Region slug -> name mapping is read from the existing region pages.
 """
 import glob
 import html
+import json
 import os
 import re
 
@@ -85,14 +87,24 @@ def questions_page() -> str:
         '<script src="questions.js"></script>\n'
     )
     return wrap(title + " — Выборы", CSS_ROOT, body)
+def greet_from_name(full_name: str) -> str:
+    parts = full_name.split()
+    return " ".join(parts[1:]) if len(parts) > 1 else full_name
+
+
 def region_page(region: str, rows) -> str:
     title = html.escape(region)
     items = []
     for r in rows:
-        name = html.escape(r[col["Кандидат"]] or "")
+        full = r[col["Кандидат"]] or ""
+        name = html.escape(full)
         party = html.escape(r[col["Партия"]] or "")
         contacts = contacts_span([r[col[c]] for c in CONTACT_COLS])
-        items.append(f'  <li><span class="name">{name}</span> <span class="party">({party})</span>{contacts}</li>')
+        greet = html.escape(greet_from_name(full), quote=True)
+        items.append(
+            f'  <li><span class="name">{name}</span> <span class="party">({party})</span>{contacts}'
+            f' <button type="button" class="ask" data-greet="{greet}">Скопировать случайный вопрос</button></li>'
+        )
     body = (
         '<nav class="breadcrumbs"><a href="../index.html">Оглавление</a><span class="sep">/</span>'
         '<a href="../deputaty.html">Депутаты</a><span class="sep">/</span>'
@@ -101,6 +113,8 @@ def region_page(region: str, rows) -> str:
         "<ul>\n"
         + "\n".join(items)
         + "\n</ul>\n"
+        '<script src="../voprosy.js"></script>\n'
+        '<script src="../questions.js"></script>\n'
     )
     return (
         HEAD + f"<title>{title} — Выборы</title>\n" + CSS + "</head>\n<body>\n" + body + FOOT
@@ -131,6 +145,11 @@ def wrap(title: str, css_link: str, inner: str) -> str:
 
 def main() -> None:
     slug = read_region_names()
+
+    # Question bank as a browser-visible JS data file (shared by region pages).
+    bank = read_questions()
+    with open("voprosy.js", "w", encoding="utf-8") as f:
+        f.write("window.VOPROSY = " + json.dumps(bank, ensure_ascii=False, indent=1) + ";\n")
 
     wb = load_workbook(REPO)
     ws = wb[REPO_SHEET]
