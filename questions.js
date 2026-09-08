@@ -36,8 +36,9 @@ function copyText(btn, text, doneLabel) {
 }
 
 document.querySelectorAll('.copy').forEach((btn) => {
+  btn.dataset.label = btn.textContent.trim();
   const q = btn.closest('.question').querySelector('.qtext');
-  btn.addEventListener('click', () => copyText(btn, q.textContent.trim(), 'Скопировано'));
+  btn.addEventListener('click', () => copyText(btn, q.textContent.trim(), 'Скопировано!'));
 });
 
 document.querySelectorAll('.ask').forEach((btn) => {

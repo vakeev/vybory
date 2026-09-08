@@ -2,10 +2,9 @@
 """Generate site pages from candidates.xlsx and voprosy.txt.
 
 Pages:
-  index.html                  root menu: «Вопросы депутатам» / «Депутаты»
+  index.html                  root page: «Все вопросы» / «Все депутаты» nav + list of regions
   voprosy-deputatam.html      question list with copy buttons
   voprosy.js                  question bank as JS data (window.VOPROSY)
-  deputaty.html               menu of regions
   regions/<slug>.html         deputies of one region, each with a random-question button
 
 Region slug -> name mapping is read from the existing region pages.
@@ -29,8 +28,12 @@ CSS = '<link rel="stylesheet" href="../styles.css">\n'
 CSS_ROOT = '<link rel="stylesheet" href="styles.css">\n'
 FOOT = "<footer>Статическая страница на GitHub Pages.</footer>\n</body>\n</html>\n"
 
-COPY_ICON = ('<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">'
-             '<path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>')
+def topnav(prefix: str, active: str) -> str:
+    def cls(key: str) -> str:
+        return ' class="cur"' if active == key else ""
+    q = '<a href="%svoprosy-deputatam.html"%s>Все вопросы</a>' % (prefix, cls("v"))
+    d = '<a href="%sindex.html"%s>Все депутаты</a>' % (prefix, cls("d"))
+    return f'<nav class="topnav">{q}{d}</nav>\n'
 
 
 def make_link(url: str) -> str:
@@ -74,14 +77,13 @@ def questions_page() -> str:
         items.append(
             '<section class="question">\n'
             f'  <div class="qhead"><span class="qnum">Вопрос {i}</span>'
-            f'<button type="button" class="copy" aria-label="Скопировать вопрос">{COPY_ICON}<span>Копировать</span></button></div>\n'
+            f'<button type="button" class="copy">Скопировать вопрос</button></div>\n'
             f'  <pre class="qtext">{html.escape(q)}</pre>\n'
             "</section>"
         )
     body = (
-        '<nav class="breadcrumbs"><a href="index.html">Оглавление</a><span class="sep">/</span>'
-        f"<span>{title}</span></nav>\n"
-        f"<h1>{title}</h1>\n"
+        topnav("", "v")
+        + f"<h1>{title}</h1>\n"
         + "\n".join(items)
         + "\n"
         '<script src="questions.js"></script>\n'
@@ -106,11 +108,9 @@ def region_page(region: str, rows) -> str:
             f' <button type="button" class="ask" data-greet="{greet}">Скопировать случайный вопрос</button></li>'
         )
     body = (
-        '<nav class="breadcrumbs"><a href="../index.html">Оглавление</a><span class="sep">/</span>'
-        '<a href="../deputaty.html">Депутаты</a><span class="sep">/</span>'
-        f"<span>{title}</span></nav>\n"
-        f"<h1>{title}</h1>\n"
-        "<ul>\n"
+        topnav("../", "d")
+        + f"<h1>{title}</h1>\n"
+        + "<ul>\n"
         + "\n".join(items)
         + "\n</ul>\n"
         '<script src="../voprosy.js"></script>\n'
@@ -173,30 +173,19 @@ def main() -> None:
         with open("regions/" + slug[region], "w", encoding="utf-8") as f:
             f.write(region_page(region, rows))
 
-    # «Депутаты»: menu of regions.
-    nav = []
-    for region in sorted(by_region, key=lambda s: s.lower()):
-        if region in slug:
-            nav.append(f'<li><a href="regions/{slug[region]}">{html.escape(region)}</a></li>')
-    deputaty_inner = (
-        '<nav class="breadcrumbs"><a href="index.html">Оглавление</a><span class="sep">/</span><span>Депутаты</span></nav>\n'
-        "<h1>Депутаты</h1>\n"
-        '<nav class="menu"><ul>\n' + "\n".join(nav) + "\n</ul></nav>\n"
-    )
-    with open("deputaty.html", "w", encoding="utf-8") as f:
-        f.write(wrap("Депутаты — Выборы", CSS_ROOT, deputaty_inner))
-
     # «Вопросы депутатам»: question list with copy buttons.
     with open("voprosy-deputatam.html", "w", encoding="utf-8") as f:
         f.write(questions_page())
 
-    # Root menu.
+    # Root page: list of all regions.
+    nav = []
+    for region in sorted(by_region, key=lambda s: s.lower()):
+        if region in slug:
+            nav.append(f'<li><a href="regions/{slug[region]}">{html.escape(region)}</a></li>')
     root_inner = (
-        "<h1>Выборы</h1>\n"
-        '<nav class="root"><ul>\n'
-        '  <li><a href="voprosy-deputatam.html">Вопросы депутатам</a></li>\n'
-        '  <li><a href="deputaty.html">Депутаты</a></li>\n'
-        "</ul></nav>\n"
+        topnav("", "d")
+        + "<h1>Выборы</h1>\n"
+        + '<nav class="menu"><ul>\n' + "\n".join(nav) + "\n</ul></nav>\n"
     )
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(wrap("Выборы", CSS_ROOT, root_inner))
