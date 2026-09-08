@@ -33,7 +33,7 @@ def topnav(prefix: str, active: str) -> str:
         return ' class="cur"' if active == key else ""
     q = '<a href="%svoprosy-deputatam.html"%s>Все вопросы</a>' % (prefix, cls("v"))
     d = '<a href="%sindex.html"%s>Все депутаты</a>' % (prefix, cls("d"))
-    return f'<nav class="topnav">{q}{d}</nav>\n'
+    return f'<nav class="topnav">{d}{q}</nav>\n'
 
 
 def make_link(url: str) -> str:
