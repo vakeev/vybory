@@ -28,6 +28,10 @@ REPO_SHEET = "Кандидаты по округам"
 
 ALLOWED_PARTIES = {"Единая Россия", "КПРФ", "ЛДПР", "Справедливая Россия", "Новые люди"}
 
+# Cell fill rule: a filled VK cell is included only if it is green; red/other
+# solid fills are skipped. Unfilled cells are always included (old sources).
+GREEN = "FF00FF00"
+
 # Округ fields for candidates not present in candidates.xlsx (source sheet has
 # no округ columns, so they are supplied here manually).
 NEW_CANDIDATE_EXTRA = {
@@ -57,11 +61,16 @@ def unwrap(v):
 
 def vk_value(rec, scol, sheaders):
     vals = []
-    for sh in ("VK 1", "VK 2 (если другой)"):
+    for sh in ("VK 1", "VK 2 (если другой)", "VK 2"):
         if sh in scol:
-            u = unwrap(rec[scol[sh] - 1].value)
-            if u:
-                vals.append(u)
+            cell = rec[scol[sh] - 1]
+            u = unwrap(cell.value)
+            if not u:
+                continue
+            fill = cell.fill
+            if fill and fill.patternType == "solid" and str(fill.fgColor.rgb) != GREEN:
+                continue
+            vals.append(u)
     return "; ".join(dict.fromkeys(vals))
 
 
@@ -82,7 +91,7 @@ def main():
         idx.setdefault((norm(name), party), []).append(row)
 
     swb = load_workbook(source)
-    sws = swb[SOURCE_SHEET]
+    sws = swb[SOURCE_SHEET] if SOURCE_SHEET in swb.sheetnames else swb[swb.sheetnames[0]]
     sheaders = [c.value for c in sws[1]]
     scol = {h: i for i, h in enumerate(sheaders, start=1)}
 
