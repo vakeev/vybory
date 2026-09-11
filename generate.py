@@ -2,10 +2,10 @@
 """Generate site pages from candidates.xlsx and voprosy.txt.
 
 Pages:
-  index.html                  root page: «Все вопросы» / «Все депутаты» nav + list of regions
-  voprosy-deputatam.html      question list with copy buttons
+  index.html                  root page: «Все вопросы» / «Все кандидаты» nav + list of regions
+  voprosy-kandidatam.html     question list with copy buttons
   voprosy.js                  question bank as JS data (window.VOPROSY)
-  regions/<slug>.html         deputies of one region, each with a random-question button
+  regions/<slug>.html         candidates of one region, each with a random-question button
 
 Region slug -> name mapping is read from the existing region pages.
 """
@@ -26,13 +26,13 @@ ALLOWED_PARTIES = {"Единая Россия", "КПРФ", "ЛДПР", "Спр�
 HEAD = "<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
 CSS = '<link rel="stylesheet" href="../styles.css">\n'
 CSS_ROOT = '<link rel="stylesheet" href="styles.css">\n'
-FOOT = "<footer>Статическая страница на GitHub Pages.</footer>\n</body>\n</html>\n"
+FOOT = "</body>\n</html>\n"
 
 def topnav(prefix: str, active: str) -> str:
     def cls(key: str) -> str:
         return ' class="cur"' if active == key else ""
-    q = '<a href="%svoprosy-deputatam.html"%s>Все вопросы</a>' % (prefix, cls("v"))
-    d = '<a href="%sindex.html"%s>Все депутаты</a>' % (prefix, cls("d"))
+    q = '<a href="%svoprosy-kandidatam.html"%s>Все вопросы</a>' % (prefix, cls("v"))
+    d = '<a href="%sindex.html"%s>Все кандидаты</a>' % (prefix, cls("d"))
     return f'<nav class="topnav">{d}{q}</nav>\n'
 
 
@@ -71,7 +71,7 @@ def read_questions() -> list[str]:
 
 
 def questions_page() -> str:
-    title = "Вопросы депутатам"
+    title = "Вопросы кандидатам"
     items = []
     for i, q in enumerate(read_questions(), 1):
         items.append(
@@ -105,7 +105,7 @@ def region_page(region: str, rows) -> str:
         greet = html.escape(greet_from_name(full), quote=True)
         items.append(
             f'  <li><span class="name">{name}</span> <span class="party">({party})</span>{contacts}'
-            f' <button type="button" class="ask" data-greet="{greet}">Скопировать случайный вопрос</button></li>'
+            f' <button type="button" class="ask" data-greet="{greet}">Скопировать текст Вашего вопроса</button></li>'
         )
     body = (
         topnav("../", "d")
@@ -173,8 +173,8 @@ def main() -> None:
         with open("regions/" + slug[region], "w", encoding="utf-8") as f:
             f.write(region_page(region, rows))
 
-    # «Вопросы депутатам»: question list with copy buttons.
-    with open("voprosy-deputatam.html", "w", encoding="utf-8") as f:
+    # «Вопросы кандидатам»: question list with copy buttons.
+    with open("voprosy-kandidatam.html", "w", encoding="utf-8") as f:
         f.write(questions_page())
 
     # Root page: list of all regions.
