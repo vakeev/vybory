@@ -46,7 +46,10 @@ document.querySelectorAll('.ask').forEach((btn) => {
   btn.addEventListener('click', () => {
     const bank = window.VOPROSY;
     if (!bank || !bank.length) return;
-    const text = btn.dataset.greet + bank[Math.floor(Math.random() * bank.length)];
+    const template = bank[Math.floor(Math.random() * bank.length)];
+    const text = template.includes('[Имя]')
+      ? template.split('[Имя]').join(btn.dataset.greet)
+      : template;
     copyText(btn, text, 'Скопировано!');
   });
 });
